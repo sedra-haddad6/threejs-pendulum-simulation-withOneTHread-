@@ -131,6 +131,42 @@ export class PhysicsEngine {
                         b1.torque.add(torque1);
                         b2.torque.sub(torque1);
 
+
+
+
+
+// // بعد حساب velAlongNormal والimpulse العادي...
+// const frictionCoeff = 0.1; // معامل احتكاك سطحي بين الكرتين
+
+// // السرعة النسبية المماسية (طرح المركبة العمودية)
+// const tangentialVx = rvx - velAlongNormal * nx;
+// const tangentialVy = rvy - velAlongNormal * ny;
+// const tangentialVz = rvz - velAlongNormal * nz;
+// const tangentialSpeed = Math.sqrt(tangentialVx**2 + tangentialVy**2 + tangentialVz**2);
+
+// if (tangentialSpeed > 1e-6) {
+//     const tHat = new PhysicsVector(tangentialVx, tangentialVy, tangentialVz).normalize();
+//     const frictionImpulse = frictionCoeff * Math.abs(impulseMagnitude);
+//     const fImpX = -frictionImpulse * tHat.x;
+//     const fImpY = -frictionImpulse * tHat.y;
+//     const fImpZ = -frictionImpulse * tHat.z;
+//     // هاي القوة المماسية عمودية على contactArm → cross product ما بيطلع صفر
+//     const frictionForce1 = new PhysicsVector(fImpX / b1.mass, fImpY / b1.mass, fImpZ / b1.mass);
+//     const torqueFromFriction = contactArm.cross(frictionForce1);
+//     b1.torque.add(torqueFromFriction);
+//     b2.torque.sub(torqueFromFriction);
+// }
+
+
+
+
+
+
+
+                        
+
+
+                        
                         const overlap = minDistance - distance;
                         const pushDistance = overlap * 0.5;
                         b1.position.x -= pushDistance * nx;
@@ -143,6 +179,7 @@ export class PhysicsEngine {
                 }
             }
         }
+
     }
 
     integrate(balls, dt) {

@@ -100,7 +100,7 @@ function updateEnergyStats() {
     document.getElementById('energy-stats').innerHTML =
         'طاقة الوضع: ' + totalEp.toFixed(2) + ' جول<br>' +
         'الطاقة الحركية: ' + totalEk.toFixed(2) + ' جول<br>' +
-        'الطاقة الدورانية: ' + totalRotationalEk.toFixed(2) + ' جول<br>' +
+        
         'الطاقة الكلية: ' + totalEnergy.toFixed(2) + ' جول';
 }
 
