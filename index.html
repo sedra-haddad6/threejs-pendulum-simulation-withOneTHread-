@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكاة بندول نيوتن ثلاثي الأبعاد</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #1a1a1a; color: #fff; }
+        #canvas-container { width: 100vw; height: 100vh; cursor: grab; }
+        #controls { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 8px; max-height: 90vh; overflow-y: auto; width: 280px; font-size: 13px; z-index: 10; border: 1px solid #444; }
+        .control-group { margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; color: #00ffcc; }
+        select, input, button { width: 100%; padding: 6px; margin-top: 4px; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; box-sizing: border-box; }
+        button { background: #00aa88; cursor: pointer; font-weight: bold; margin-top: 8px; border: none; }
+        button:hover { background: #00ccaa; }
+
+        .button-group { display: flex; gap: 6px; margin-top: 4px; }
+        .button-group button { flex: 1; margin-top: 0; }
+
+        .stats { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; border: 1px solid #555; pointer-events: none; }
+
+        #rope-status { background: rgba(0, 170, 136, 0.2); padding: 6px; border-radius: 4px; border: 1px solid #00aa88; color: #00ffcc; font-size: 12px; margin-top: 8px; text-align: center; }
+
+        #camera-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 5px; font-size: 11px; border: 1px solid #555; pointer-events: none; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="controls">
+        <h3>لوحة تحكم المنظومة الفيزيائية</h3>
+
+        <div class="control-group">
+            <label for="special-case">الحالات الخاصة والتعديلات:</label>
+            <select id="special-case">
+                <option value="normal">حالة طبيعية (كتل وأطوال متساوية)</option>
+                <option value="mass-variance">اختلاف الكتل (الكرة الوسطى أثقل 5 مرات)</option>
+                <option value="length-variance">اختلاف أطوال الخيوط (نمط متدرج)</option>
+                <option value="inelastic">تصادم غير مرن بالكامل (التصاق طاقي)</option>
+                <option value="punctured-ball">كرة مثقوبة (كتلة متناقصة تدريجياً وعطالة متغيرة)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="ball-select">الكرة المراد إزاحتها:</label>
+            <select id="ball-select">
+                <option value="0">الكرة الأولى</option>
+                <option value="1">الكرة الثانية</option>
+                <option value="2">الكرة الثالثة</option>
+                <option value="3">الكرة الرابعة</option>
+                <option value="4">الكرة الأخيرة</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="init-offset-x">إزاحة الكرة (المحور X):</label>
+            <input type="range" id="init-offset-x" min="0" max="1.9" step="0.1" value="1.2">
+            <span id="offset-val">1.2 م</span>
+        </div>
+
+        <div class="control-group">
+            <label for="init-offset-z">إزاحة الكرة خارج المستوي (المحور Z):</label>
+            <input type="range" id="init-offset-z" min="-1.9" max="1.9" step="0.1" value="0">
+            <span id="offset-z-val">0.0 م</span>
+        </div>
+
+        <div class="control-group">
+            <label for="gravity-slider">الجاذبية الأرضية (g):</label>
+            <input type="range" id="gravity-slider" min="-15" max="25" step="0.1" value="9.81">
+            <span id="gravity-value">9.81 m/s²</span>
+        </div>
+
+        <div class="control-group">
+            <label for="damping-slider">مقاومة الهواء (التخامد ):</label>
+            <input type="range" id="damping-slider" min="0" max="0.002" step="0.00001" value="0.0001"
+oninput="updateVisibleDamping(this.value)">
+<span id="damping-value-visible">1.25 kg/m³</span>
+    
+    <span id="damping-value" style="display: none;">0.0001</span>
+            
+        </div>
+<script>
+// دالة بسيطة جداً وسطر واحد لتغيير العرض فقط بالواجهة
+function updateVisibleDamping(val) {
+    // نضرب القيمة الصغيرة بـ 12500 لكي تظهر الأرقام للمستخدم بين 0 و 25 kg/m³ بشكل منطقي ومقنع
+    let visibleVal = (parseFloat(val) * 12500).toFixed(2);
+    document.getElementById('damping-value-visible').innerText = visibleVal + " kg/m³";
+}
+</script>
+
+
+        <div class="control-group">
+            <label>إجراءات ديناميكية أثناء الحركة:</label>
+            <button id="snap-rope-btn" style="background: #cc2222;">قطع خيط الكرة (مقذوف)</button>
+            <button id="drop-multiple-btn" style="background: #0088cc;">إسقاط كرتين</button>
+        </div>
+
+        <button id="reset-btn">إعادة تشغيل المحاكاة</button>
+
+        <div id="rope-status"> جاهز للمحاكاة</div>
+    </div>
+
+    <div class="stats" id="energy-stats">
+        طاقة الوضع: 0 جول<br>
+        الطاقة الحركية: 0 جول<br>
+        الطاقة الدورانية: 0 جول<br>
+        الطاقة الكلية: 0 جول
+    </div>
+
+    <div id="camera-hint">🖱️ اسحب لتدوير الكاميرا · عجلة الفأرة للتقريب/الإبعاد</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+    }
+    </script>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
